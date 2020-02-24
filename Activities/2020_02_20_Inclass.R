@@ -31,12 +31,21 @@ sum(str_detect(str_to_lower(lydatweets$Text),pattern = 'police'))
 #Number of tweets with a link
 sum(str_detect(str_to_lower(lydatweets$Text),pattern = 'http'))
 
+
+##ACTIVITY FOR CLASS#####
+
+#1
 #number of tweets that mention police
-sum(str_detect(str_to_lower(tweets$Text),pattern = 'police|policing|cops|black lives matter|blm'))
+sum(str_detect(str_to_lower(tweets$Text),pattern = 'police|policing|cops|law enforcement'))
+sum(str_detect(str_to_lower(tweets$Text),pattern = 'black lives matter|blm'))
 
-#looking at those tweets
-sum(str_detect(str_to_lower(tweets$Text), pattern = 'police|policing|cops|black lives matter|blm'))
+#vector of logicals where these appear
+copmatch <- str_detect(str_to_lower(tweets$Text),pattern = 'police|policing|cops|law enforcement')
+blmmatch <- str_detect(str_to_lower(tweets$Text),pattern = 'black lives matter|blm')
 
+#2
+tweets <- rename(tweets, TwitterHandle=ScreenName)
+mayors$TwitterHandle
 
 
 
