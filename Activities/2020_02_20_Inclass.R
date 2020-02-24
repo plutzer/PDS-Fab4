@@ -2,7 +2,7 @@ rm(list = ls())
 library(tidyverse)
 
 mayors<-read_csv(file="https://raw.githubusercontent.com/jmontgomery/jmontgomery.github.io/master/PDS/Datasets/Mayors.csv")
-tweets<-read_csv("~/PDS/Tweets.csv")
+tweets<-read_csv("~/Downloads/Tweets.csv")
 
 #LydaKrewson
 lydatweets = tweets %>%
@@ -30,3 +30,14 @@ sum(str_detect(str_to_lower(lydatweets$Text),pattern = 'police'))
 
 #Number of tweets with a link
 sum(str_detect(str_to_lower(lydatweets$Text),pattern = 'http'))
+
+#number of tweets that mention police
+sum(str_detect(str_to_lower(tweets$Text),pattern = 'police|policing|cops|black lives matter|blm'))
+
+#looking at those tweets
+sum(str_detect(str_to_lower(tweets$Text), pattern = 'police|policing|cops|black lives matter|blm'))
+
+
+
+
+
