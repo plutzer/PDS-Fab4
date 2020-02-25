@@ -45,8 +45,62 @@ blmmatch <- str_detect(str_to_lower(tweets$Text),pattern = 'black lives matter|b
 
 #2
 tweets <- rename(tweets, TwitterHandle=ScreenName)
-mayors$TwitterHandle
+#mayors$TwitterHandle
 
+# These are datasets of just the tweets we're interested in
+blmtweets = tweets %>%
+  filter(blmmatch)
 
+copstweets = tweets %>%
+  filter(copmatch)
 
+#Now ill count up the occurances of each mayors twitter name in these datasets
+# and add them as new columns in the mayors dataset
 
+blmcounts = blmtweets %>%
+  count(TwitterHandle)
+blmcounts = rename(blmcounts,blmcounts = n)
+mayors = mayors %>% 
+  left_join(blmcounts,by = 'TwitterHandle')
+
+copscounts = copstweets %>%
+  count(TwitterHandle)
+copscounts = rename(copscounts,copscounts = n)
+mayors = mayors %>%
+  left_join(copscounts,by = 'TwitterHandle')
+
+# We now have the blmcounts and copscounts in the mayors dataset...
+
+# Now all we need to do is plot blmcounts and copscounts against the population column
+
+# First getting rid of NA vals
+
+library(tidyr)
+
+mayors = mayors %>% drop_na(blmcounts,copscounts)
+
+mayors = rename(mayors,blm = blmcounts)
+mayors = rename(mayors,cop = copscounts)
+mayors = rename(mayors,pop = Population)
+
+## Feel free to play around with the plots from here down and see
+# if you can make something cool, i just did some linear regressions
+
+library(ggplot2)
+## Plot the number of blm tweets against the population, add a linear regression
+ggplot(mayors, aes(x = pop,y = blm)) +
+  geom_point() +
+  ylim(0,5) + 
+  geom_smooth(method = lm)
+
+fit = lm(blm~pop,mayors)
+fit
+
+ggplot(mayors,aes(x = pop,y = cop)) + 
+  geom_point() +
+  #xlim(0,500000) +
+  #ylim(0,200) +
+  geom_smooth(method = lm)
+
+fit = lm(cop~pop,mayors)
+fit
