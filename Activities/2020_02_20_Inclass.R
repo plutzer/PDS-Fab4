@@ -92,7 +92,9 @@ mayorscop = drop_na(mayors,cop)
 
 library(ggplot2)
 ## Plot the number of blm tweets against the population, add a linear regression
-ggplot(mayorsblm, aes(x = pop,y = blm)) +
+ggplot(mayorsblm, aes(x = pop,y = blm)) +  
+  ggtitle("Population predicts Mayoral #BLUElm tweets") +
+  theme(plot.title = element_text(hjust = 0.5)) +  
   geom_point() +
   #ylim(0,5) + 
   geom_smooth(method = lm)
@@ -101,8 +103,10 @@ fit = lm(blm~pop,mayors)
 fit
 
 ggplot(mayorscop,aes(x = pop,y = cop)) + 
+  ggtitle("Population predicts Mayoral #BLUElm tweets") +
+  theme(plot.title = element_text(hjust = 0.5)) +  
   geom_point() +
-  #xlim(0,500000) +
+  xlim(0,500000) +
   #ylim(0,200) +
   geom_smooth(method = lm)
 
