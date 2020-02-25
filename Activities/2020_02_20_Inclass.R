@@ -33,6 +33,15 @@ sum(str_detect(str_to_lower(lydatweets$Text),pattern = 'http'))
 
 
 ##ACTIVITY FOR CLASS#####
+# Repasting some of the code from the top so I don't have to scroll as much...
+
+rm(list = ls())
+library(tidyverse)
+
+mayors<-read_csv(file="https://raw.githubusercontent.com/jmontgomery/jmontgomery.github.io/master/PDS/Datasets/Mayors.csv")
+tweets<-read_csv("~/Downloads/Tweets.csv")
+
+
 
 #1
 #number of tweets that mention police
@@ -77,26 +86,28 @@ mayors = mayors %>%
 
 library(tidyr)
 
-mayors = mayors %>% drop_na(blmcounts,copscounts)
 
 mayors = rename(mayors,blm = blmcounts)
 mayors = rename(mayors,cop = copscounts)
 mayors = rename(mayors,pop = Population)
+
+mayorsblm = drop_na(mayors,blm)
+mayorscop = drop_na(mayors,cop)
 
 ## Feel free to play around with the plots from here down and see
 # if you can make something cool, i just did some linear regressions
 
 library(ggplot2)
 ## Plot the number of blm tweets against the population, add a linear regression
-ggplot(mayors, aes(x = pop,y = blm)) +
+ggplot(mayorsblm, aes(x = pop,y = blm)) +
   geom_point() +
-  ylim(0,5) + 
+  #ylim(0,5) + 
   geom_smooth(method = lm)
 
 fit = lm(blm~pop,mayors)
 fit
 
-ggplot(mayors,aes(x = pop,y = cop)) + 
+ggplot(mayorscop,aes(x = pop,y = cop)) + 
   geom_point() +
   #xlim(0,500000) +
   #ylim(0,200) +
