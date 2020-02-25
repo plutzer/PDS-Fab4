@@ -45,12 +45,14 @@ tweets<-read_csv("~/Downloads/Tweets.csv")
 
 #1
 #number of tweets that mention police
-sum(str_detect(str_to_lower(tweets$Text),pattern = 'police|policing|cops|law enforcement'))
-sum(str_detect(str_to_lower(tweets$Text),pattern = 'black lives matter|blm'))
+sum(str_detect(str_to_lower(tweets$Text),pattern = 'police|policing|cops|law enforcement|blue lives matter|#bluelivesmatter'))
+sum(str_detect(str_to_lower(tweets$Text),pattern = 'black lives matter|blm|trayvon martin|eric garner|philando castile|stephon clark|#takeaknee'))
+
 
 #vector of logicals where these appear
-copmatch <- str_detect(str_to_lower(tweets$Text),pattern = 'police|policing|cops|law enforcement')
-blmmatch <- str_detect(str_to_lower(tweets$Text),pattern = 'black lives matter|blm')
+copmatch <- str_detect(str_to_lower(tweets$Text),pattern = 'police|policing|cops|law enforcement|blue lives matter|#bluelivesmatter')
+blmmatch <- str_detect(str_to_lower(tweets$Text),pattern = 'black lives matter|blm|trayvon martin|eric garner|philando castile|stephon clark|#takeaknee')
+
 
 #2
 tweets <- rename(tweets, TwitterHandle=ScreenName)
