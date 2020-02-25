@@ -88,6 +88,10 @@ mayors = rename(mayors,pop = Population)
 mayorsblm = drop_na(mayors,blm)
 mayorscop = drop_na(mayors,cop)
 
+##Histograms of frequency of mayoral mentions of each subject
+hist(mayors$cop, main="Mentions of Cops")
+hist(mayors$blm, main="Mentions of BLM")
+
 ## Some linear regressions showing population as an indicator of #blacklivesmatter and #bluelivesmatter
 
 library(ggplot2)
