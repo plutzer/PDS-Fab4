@@ -100,19 +100,19 @@ ggplot(mayorsblm, aes(x = pop,y = blm)) +
   ggtitle("Population predicts Mayoral #BLUElm tweets") +
   theme(plot.title = element_text(hjust = 0.5)) +  
   geom_point() +
-  #ylim(0,5) + 
+  ylim(0,5) + 
   geom_smooth(method = lm)
 
 fit = lm(blm~pop,mayors)
-fit
+summary(fit)
 
 ggplot(mayorscop,aes(x = pop,y = cop)) + 
-  ggtitle("Population predicts Mayoral #BLUElm tweets") +
+  ggtitle("Population predicts Mayoral police tweets") +
   theme(plot.title = element_text(hjust = 0.5)) +  
   geom_point() +
   xlim(0,500000) +
-  #ylim(0,200) +
+  ylim(0,200) +
   geom_smooth(method = lm)
 
 fit = lm(cop~pop,mayors)
-fit
+summary(fit)
