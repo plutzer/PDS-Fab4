@@ -6,13 +6,17 @@
 #Find the median level of support for each institution
 #Make a plot showing trust in institutions ordering institutiosn from least trusted to most trusted among the American public
 
+#Read Dataset
 rm(list=ls())
-
 library(tidyverse)
 VSG<-read_csv("~/Downloads/VOTER_Survey_Jan217_Release1-csv.csv")
-
+#Just variables that start with inst
 VSG<- VSG %>% 
-  select(starts_with("inst_")) %>% 
+  select(starts_with("inst_")) 
+#Recode NAs
+columnnames<-colnames(VSG)
+VSG %>%
+lapply(colnames(VSG),recode,8 = NA)
 
   #Similar code from Class
   #map(VSG.fav, mean, na.rm=TRUE)
