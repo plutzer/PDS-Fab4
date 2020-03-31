@@ -60,16 +60,35 @@ sqrt(mean((SimpleModelPredictions-senate_test$VotePercentage)^2))
   
 ###Predicting Senate Races
   #we can use the general model we found above to try to predict the outcome of Senate races
-  #remember the model was lm(VotePercentage ~ Incumbent + weightexperience + PercentageRaised, data=SEN)
-  #now we just adapt it to the new data
   
   #reading in new data
   sen18 <- read.csv("http://politicaldatascience.com/PDS/Datasets/SenateForecast/CandidateLevel2018.csv")
   View(sen18)
   
+  #lets try to predict the races using the regression from above
+  #the regression equation we found is:
+  #30.95772 + 2.40866(Incumbent) + 1.29763(weightexperience) + 0.26986(Percentage Raised)
+  #predict our values based on that
   
+  #2018MOMcCaskill
+  predMO <- 30.95772+2.40866*sen18$Incumbent[15]+1.29763*sen18$Weightedexperience[15]+0.26986*sen18$Percentage.Raised[15]
+  predMO
   
+  #2018OHBrown
+  predOH <- 30.95772+2.40866*sen18$Incumbent[8]+1.29763*sen18$Weightedexperience[8]+0.26986*sen18$Percentage.Raised[8]
+  predOH
   
+  #2018WVManchin
+  predWV <- 30.95772+2.40866*sen18$Incumbent[19]+1.29763*sen18$Weightedexperience[19]+0.26986*sen18$Percentage.Raised[19]
+  predWV
+  
+  #real values (from internet)
+  realMO <- 45.6
+  realOH <- 53.4
+  realWV <- 49.6
+  
+  #rmse
+  sqrt(mean((predMO-realMO)^2+(predOH-realOH)^2+(predWV-realWV)^2))
   
   
   
