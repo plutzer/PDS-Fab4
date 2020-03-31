@@ -10,19 +10,21 @@
 
 rm(list = ls())
 library(tidyverse)
+
 ########## Predicting 2016
 SEN <-read.csv("http://politicaldatascience.com/PDS/Datasets/SenateForecast/CandidateLevel.csv")
+
 ######### Jacob's model
 SimpleModelFull<-lm(VotePercentage~pvi*Republican+Incumbent, data=SEN)
 summary(SimpleModelFull)$r.squared
-install.packages('rsample')
 library(rsample)
 split_senateData<-initial_split(SEN, prop=.8)
 senate_train<-training(split_senateData)
 senate_test<-testing(split_senateData)
 SimpleModelTrain<-lm(VotePercentage~pvi*Republican+Incumbent, data=senate_train)
 SimpleModelPredictions<-predict(SimpleModelTrain, newdata=senate_test)
-sqrt(mean((SimpleModelPredictions-senate_train$VotePercentage)^2))
+sqrt(mean((SimpleModelPredictions-senate_test$VotePercentage)^2))
+
 ######## Group Model
 groupmodel <- lm(VotePercentage ~ Incumbent + experienced + Democrat * pvi, data=SEN)
 summary(groupmodel)$r.squared
