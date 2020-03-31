@@ -26,12 +26,12 @@ SimpleModelPredictions<-predict(SimpleModelTrain, newdata=senate_test)
 sqrt(mean((SimpleModelPredictions-senate_test$VotePercentage)^2))
 
 ######## Group Model
-groupmodel <- lm(VotePercentage ~ Incumbent + experienced + Democrat * pvi, data=SEN)
+groupmodel <- lm(VotePercentage ~ Incumbent + experienced + Democrat + pvi, data=SEN)
 summary(groupmodel)$r.squared
 split_data<-initial_split(SEN, prop=.8)
 data_train<-training(split_data)
 data_test<-testing(split_data)
-groupmodel.train <- lm(VotePercentage ~ Incumbent + experienced + Democrat * pvi, data=data_train)
-groupmodel.pred <- lm(VotePercentage ~ Incumbent + experienced + Democrat * pvi, data=data_test)
+groupmodel.train <- lm(VotePercentage ~ Incumbent + experienced + Democrat + pvi, data=data_train)
+groupmodel.pred <- lm(VotePercentage ~ Incumbent + experienced + Democrat + pvi, data=data_test)
 GroupModelPredictions<-predict(groupmodel.pred, newdata=data_test)
 sqrt(mean((GroupModelPredictions-data_test$VotePercentage)^2))
