@@ -5,6 +5,7 @@ library(readr)
 senateData<-read_csv("http://politicaldatascience.com/PDS/Datasets/SenateForecast/CandidateLevel.csv")
 
 #making new data
+library(tidyverse)
 SenateTop<- senateData %>% group_by(RaceID) %>% top_n(1,VotePercentage)
 SenateNotTop = senateData[!(senateData$Candidateidentifier %in% SenateTop$Candidateidentifier),]
 SenateTop$won = 1
@@ -73,20 +74,6 @@ recallForest
 
 #k nearest neighbors
 library(class)
-tests <- 253:290
-train.inc <- inc.subset[-tests,]
-test.inc <- inc.subset[tests,]
-
-train.def <- incumbents$won[-tests]
-test.def <- incumbents$won[tests]
-
-knn.1 <-  knn(train.inc, test.inc, train.def, k=1)
-
-
-mod1_knn<-knn(training[,-15], test[,-15], cl=label, k=10)
-table(mod1_knn, test$won)
-colnames(training)
-
 testX <- test[,c("VotePercentage","Republican","pvi","year","weightexperience")]
 trainX = training[,c("VotePercentage","Republican","pvi","year","weightexperience")]
 nearest = knn(train = trainX, test = testX, cl=training$won)
@@ -95,9 +82,12 @@ nearest = knn(train = trainX, test = testX, cl=training$won)
 table(nearest,test$won)
 
 #accuracy
+accuracyKNN <- 26/(26+1)
+accuracyKNN
+
 #recall
-
-
+recallKNN <- 26/(26+1)
+recallKNN
 
 
 
