@@ -1,48 +1,33 @@
 ####APRIL 2 PDS GROUP ASSIGNMENT######
-
+rm(list=ls())
 #reading in the data
 library(readr)
 senateData<-read_csv("http://politicaldatascience.com/PDS/Datasets/SenateForecast/CandidateLevel.csv")
-View(senateData)
-dim(senateData)
 
 #making new data
 SenateTop<- senateData %>% group_by(RaceID) %>% top_n(1,VotePercentage)
-View(SenateTop)
-
-SenateTop <- SenateTop %>%
-  filter(Incumbent > 0)
-
-SenateTop$won <- 1
-View(SenateTop)  
-
-winners <- SenateTop$Candidateidentifier
-
-senators <- full_join(SenateTop, senateData, by = "Candidateidentifier")
-senators[is.na(senators$won),]$won <- 0
-senators$won
-colnames(senators)
-
-#filtering down to just incumbents
-incumbents <- senators %>%
-  filter(Incumbent.y == 1)
+SenateNotTop = senateData[!(senateData$Candidateidentifier %in% SenateTop$Candidateidentifier),]
+SenateTop$won = 1
+SenateNotTop$won = 0
+senateData_all = bind_rows(SenateTop,SenateNotTop)
+incumbents = senateData_all[senateData_all$Incumbent > 0,]
+incumbents$won
 
 test <- incumbents %>%
-  filter(year.y == 2016)
+  filter(year == 2016)
 
 training <- incumbents %>%
-  filter(year.y != 2016)
+  filter(year != 2016)
 
-colnames(training)
+training$won
 
-fullModel <- lm(won ~ pvi.y*Democrat.y + weightexperience.y + PercentageRaised.y + GenericBallotSept.y, data=training)
+fullModel <- lm(won ~ pvi*Democrat + weightexperience + PercentageRaised + GenericBallotSept, data=training)
 library(MASS)
 step <- stepAIC(fullModel, direction="both")
 step
 
-dim(training)
 #fit linear model
-linear<-glm(won ~ pvi.y*Democrat.y + weightexperience.y + PercentageRaised.y, family="binomial", data=training)
+linear<-glm(won ~ pvi*Democrat + weightexperience + PercentageRaised, family="binomial", data=training)
 summary(linear)
 linearPreds<-predict(linear, newdata=test, type="response")
 
@@ -63,7 +48,7 @@ recallLinear
 
 #fit random forest
 library(randomForest)
-forest<-randomForest(as.factor(won) ~ pvi.y*Democrat.y + weightexperience.y + PercentageRaised.y, data=training, ntree=700, mtry=1, importance=TRUE)
+forest<-randomForest(as.factor(won) ~ pvi*Democrat + weightexperience + PercentageRaised, data=training, ntree=500, mtry=2)
 forest # This confusion matrix is "out of bag"
 #ignore the given confusion matrix and make my own by
 #messing with mtry, ntree, maxnodes
@@ -77,16 +62,40 @@ binaryForestPreds<-(as.numeric(forestPreds)>1)*1
 forestConfusion <- table(binaryForestPreds, test$won)
 forestConfusion
 
+#calculate precision, recall and accuracy of this model
+#precision = true pos/(trus pos + false pos)
+#recall = true pos/ (tru pos + false neg)
+precisionForest <- 26/(26+2)
+precisionForest
+recallForest <- 26/(26+1)
+recallForest
+
 
 #k nearest neighbors
 library(class)
-trainingX<-training[,c("pvi.y", "Democrat.y", "PercentageRaised.y", "weightexperience.y")]
-trainingX$inc<-turnoutX$inc+rnorm(length(turnoutX$inc), 0, .001)
-mod1_knn<-knn(turnoutX, test=turnoutX, cl=turnout$turnout, k=10)
-table(mod1_knn, turnout$turnout)
+tests <- 253:290
+train.inc <- inc.subset[-tests,]
+test.inc <- inc.subset[tests,]
+
+train.def <- incumbents$won[-tests]
+test.def <- incumbents$won[tests]
+
+knn.1 <-  knn(train.inc, test.inc, train.def, k=1)
 
 
+mod1_knn<-knn(training[,-15], test[,-15], cl=label, k=10)
+table(mod1_knn, test$won)
+colnames(training)
 
+testX <- test[,c("VotePercentage","Republican","pvi","year","weightexperience")]
+trainX = training[,c("VotePercentage","Republican","pvi","year","weightexperience")]
+nearest = knn(train = trainX, test = testX, cl=training$won)
+
+#confusion matrix
+table(nearest,test$won)
+
+#accuracy
+#recall
 
 
 
