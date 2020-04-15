@@ -41,7 +41,7 @@ for(i in c(1:10)){
   } else {
     thisUrl <- paste0("https://scholar.google.com/scholar?start=", i-1, "0&q=political+parties&hl=en&as_sdt=7,26")
     partyResults[[i-1]] <- read_html(thisUrl) %>%
-      html_nodes(".gs_rt a , b , .gs_or_cit+ a , .gs_a") %>%
+      html_nodes(".gs_or_cit+ a , #kKs31mjMKgsJ , #wbhgkYkjxsUJ") %>%
       html_text()
     }
 }
