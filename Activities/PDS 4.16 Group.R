@@ -47,3 +47,38 @@ for(i in c(1:10)){
 }
 str(partyResults)
 partyResults[1]
+
+#############################
+
+rm(list=ls())
+
+gs_url<-"https://scholar.google.com/scholar?hl=en&as_sdt=7%2C26&q=political+parties&btnG="
+titles<-gs_url%>%
+  read_html()%>%
+  html_nodes(".gs_rt a") %>%
+  html_text()
+
+citations<-gs_url%>%
+  read_html()%>%
+  html_nodes(".gs_scl~ .gs_scl+ .gs_scl .gs_or_cit+ a , .gs_qsuggest_wrap+ .gs_scl .gs_nph+ a , .gs_ri:nth-child(1) .gs_or_cit+ a") %>%
+  html_text() 
+for (i in 1:100) {
+  gs_url_2 = paste0("https://scholar.google.com/scholar?start=", i ,"0&hl=en&as_sdt=7%2C26&q=political+parties&btnG=")
+  titles2<-gs_url_2%>%
+    read_html()%>%
+    html_nodes(".gs_rt a") %>%
+    html_text()
+  citations2<-gs_url_2%>%
+    read_html()%>%
+    html_nodes(".gs_scl~ .gs_scl+ .gs_scl .gs_or_cit+ a , .gs_qsuggest_wrap+ .gs_scl .gs_nph+ a , .gs_ri:nth-child(1) .gs_or_cit+ a") %>%
+    html_text()
+  citations = append(citations,citations2)
+  titles = append(titles,titles2)
+}
+
+num_citations = extract_numeric(citations)
+
+log_citations = log(num_citations)
+
+boxplot(log_citations,main = "Log-citations of political parties google scholar search",ylab = 'Log Citations')
+
