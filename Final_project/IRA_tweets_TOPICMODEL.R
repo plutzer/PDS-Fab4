@@ -88,3 +88,10 @@ master_dfm = dfm_subset(master_dfm,c(F,rep(T,docscount)))
 ## Now run the topic model - Takes ~15 mins
 stm = stm(master_dfm,K = 20, verbose = F, init.type = "Spectral")
 stm[[5]]
+
+#visualizing the topic model
+topTopics <- plot(stm)
+
+wordCloud <- textplot_wordcloud(master_dfm, min_count = 25, random_order = FALSE,
+                   rotation = .25,
+                   color = RColorBrewer::brewer.pal(8, "Dark2"))
