@@ -7,10 +7,11 @@ library(tidytext)
 library(stm)
 library(ggplot2)
 library(quanteda)
+library(dfm)
 library(qdap)
 
 #Loading in data and re-casting date column
-iraTweets <- fread("~/Downloads/eng_only_ira_tweets.csv")
+iraTweets <- fread("~/PDS/eng_only_ira_tweets.csv")
 iraTweets$tweet_time = as.Date(iraTweets$tweet_time)
 
 #Splitting the tweets into 8 time categories (to become "documents" later)
@@ -25,6 +26,7 @@ group7 = iraTweets[((iraTweets$tweet_time >=  "2017-01-20") & (iraTweets$tweet_t
 data_list = list(group1,group2,group3,group4,group5,group6,group7) # Assembling a list to make iteration easier later
 
 master_dfm = dfm(" ",groups = "empty") # Intialize a dfm with an empty document
+docs_vec = c("")
 docscount = 0 # To keep track of the total number of documents in the dfm
 for (i in 1:length(data_list)) { #This outer loop iterates over the time group divisions
   group_df = data_list[[i]]
@@ -52,12 +54,12 @@ for (i in 1:length(data_list)) { #This outer loop iterates over the time group d
     doc_string = doc_string[doc_string != "0"]
     doc_string = doc_string[doc_string != "("] #These are apparently widely used bit I don't know why
     doc_string = doc_string[doc_string != ")"]
-    doc_string = gsub("^amp$", "", doc_string) #remove all the random amps
     
     ########### END OF TEXT CLEANING AND FILTERING ###############################
     
     ## Creating frequency matrix element for this document
     doc_corpus = corpus(paste(doc_string,collapse = " "))
+    docs_vec = c(docs_vec,paste(doc_string,collapse = " "))
     doc_name = paste("g",i,"-",unique_handles[j],sep = "") #Making a name for each doc
     doc_dfm = dfm(doc_corpus,groups = doc_name)
     
@@ -74,23 +76,30 @@ for (i in 1:length(data_list)) { #This outer loop iterates over the time group d
 master_dfm
 doc_corpus
 doc_string
-
-master_dfm <- dfm(master_dfm, remove = stopwords("english"), stem = TRUE)
-topfeatures(master_dfm, 200)
 ######################################################################################################
 
 #### Once you are more satisfied with your text cleaning, you can run the topic model...
 ### Keep playing with text cleaning, and the stm parameters and see if you can produce meaningful topics...
 
-#Removing the empty doc we put in the dfm to start
-master_dfm = dfm_subset(master_dfm,c(F,rep(T,docscount))) 
+#Removing the empty doc we put in the dfm and docsvec to start
+master_dfm = dfm_subset(master_dfm,c(F,rep(T,docscount)))
+docs_vec = docs_vec[2:length(docs_vec)]
 
 ## Now run the topic model - Takes ~15 mins
 stm = stm(master_dfm,K = 20, verbose = F, init.type = "Spectral")
-stm[[5]]
 
-#visualizing the topic model
-topTopics <- plot(stm)
+summary(stm)
+
+#Gives representative documents for a given topic
+findThoughts(stm,texts  = docs_vec,topics = 20,n = 5) 
+
+# print the theta matrix
+stm$theta
+
+#check against the num of docs
+class(stm$theta)
+dim(stm$theta)
+docscount
 
 wordCloud <- textplot_wordcloud(master_dfm, min_count = 25, random_order = FALSE,
                    rotation = .25,
