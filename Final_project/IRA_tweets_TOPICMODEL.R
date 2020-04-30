@@ -7,11 +7,10 @@ library(tidytext)
 library(stm)
 library(ggplot2)
 library(quanteda)
-library(dfm)
 library(qdap)
 
 #Loading in data and re-casting date column
-iraTweets <- fread("~/PDS/eng_only_ira_tweets.csv")
+iraTweets <- fread("~/Downloads/eng_only_ira_tweets.csv")
 iraTweets$tweet_time = as.Date(iraTweets$tweet_time)
 
 #Splitting the tweets into 8 time categories (to become "documents" later)
@@ -53,6 +52,7 @@ for (i in 1:length(data_list)) { #This outer loop iterates over the time group d
     doc_string = doc_string[doc_string != "0"]
     doc_string = doc_string[doc_string != "("] #These are apparently widely used bit I don't know why
     doc_string = doc_string[doc_string != ")"]
+    doc_string = gsub("^amp$", "", doc_string) #remove all the random amps
     
     ########### END OF TEXT CLEANING AND FILTERING ###############################
     
@@ -74,6 +74,9 @@ for (i in 1:length(data_list)) { #This outer loop iterates over the time group d
 master_dfm
 doc_corpus
 doc_string
+
+master_dfm <- dfm(master_dfm, remove = stopwords("english"), stem = TRUE)
+topfeatures(master_dfm, 200)
 ######################################################################################################
 
 #### Once you are more satisfied with your text cleaning, you can run the topic model...
@@ -84,3 +87,4 @@ master_dfm = dfm_subset(master_dfm,c(F,rep(T,docscount)))
 
 ## Now run the topic model - Takes ~15 mins
 stm = stm(master_dfm,K = 20, verbose = F, init.type = "Spectral")
+stm[[5]]
