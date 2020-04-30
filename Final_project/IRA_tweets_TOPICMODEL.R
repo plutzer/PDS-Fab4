@@ -95,3 +95,31 @@ topTopics <- plot(stm)
 wordCloud <- textplot_wordcloud(master_dfm, min_count = 25, random_order = FALSE,
                    rotation = .25,
                    color = RColorBrewer::brewer.pal(8, "Dark2"))
+
+theta1 <- stm$theta[docnames(master_dfm) %in% grep(pattern = "g1-",docnames(master_dfm),value = T),]
+theta2 <- stm$theta[docnames(master_dfm) %in% grep(pattern = "g2-",docnames(master_dfm),value = T),]
+theta3 <- stm$theta[docnames(master_dfm) %in% grep(pattern = "g3-",docnames(master_dfm),value = T),]
+theta4 <- stm$theta[docnames(master_dfm) %in% grep(pattern = "g4-",docnames(master_dfm),value = T),]
+theta5 <- stm$theta[docnames(master_dfm) %in% grep(pattern = "g5-",docnames(master_dfm),value = T),]
+theta6 <- stm$theta[docnames(master_dfm) %in% grep(pattern = "g6-",docnames(master_dfm),value = T),]
+theta7 <- stm$theta[docnames(master_dfm) %in% grep(pattern = "g7-",docnames(master_dfm),value = T),]
+
+means1 <- colMeans(theta1)
+means2 <- colMeans(theta2)
+means3 <- colMeans(theta3)
+means4 <- colMeans(theta4)
+means5 <- colMeans(theta5)
+means6 <- colMeans(theta6)
+means7 <- colMeans(theta7)
+
+groupTheta <- rbind(means1, means2, means3, means4, means5, means6, means7)
+
+rownames(groupTheta) <- c("9.12-26", "9.26-10.7", "10.7-21", "10.25-11.8", "11.8-22", "1.16-20", "1.20-2.3")
+barplot(groupTheta[1:7, 11], main = "Expected Proportion of Tweets on Topic 11", xlab = "Date", ylab = "Proportion", col = "blue", ylim = c(0,0.25))
+
+barplot(groupTheta[1:7, 16])
+barplot(groupTheta[1:7, 17])
+
+saveRDS(stm,"~/Downloads/stm.rds")
+
+summary(stm)
