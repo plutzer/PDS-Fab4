@@ -13,23 +13,15 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Introduction
 
-While there has been growing concern over the prevalence of bots in social media and how they impact the national discourse on politics and various issues, there has not been much research regarding what sort of information the bots are disseminating and how their message has changed over time. In our PDS project, we wanted to look into this issue by examining a data set of Twitter bot activity during the 2016 election.
+While there has been growing concern over the prevalence of bots in social media and how they impact the national discourse on politics and various issues, there has not been much research regarding what sort of information the bots are disseminating and how their message has changed over time. In this project, we wanted to look into this issue by examining a data set of Twitter bot activity during the 2016 election.
 
 ## Data
 
-In October 2018, Twitter released data on the 3,613 accounts associated with the Russian Internet Research Agency. This company is a known "troll farm" that facilitates the generation of fake accounts and news aimed at influencing public opinion. We consider the content of the tweets in this corpus as the independent variable. 
+In October 2018, Twitter released data on the 3,613 accounts associated with the Russian Internet Research Agency. This company is a known "troll farm" that facilitates the generation of fake accounts and news aimed at influencing public opinion. Our analysis explores the content of the nearly 3 million tweets in this corpus, seeking to understand what types of information the bots introduce. 
 
 ## Method
 
-We use the `stm` library, employing a topic model to examine what content Twitter bots distributed during and following the 2016 U.S. presidential election. 
-
-## Viz?
-
-##Discussion
-
-##Conclusion
-
-While the findings from our PDS project certainly expand upon the existing knowledge on bots and their misinformation campaigns, there are still many questions that have yet to be answered. For example, while our project figured out what sort of topics bots are most likely to tweet and how their engagement in these topics changed over the course of the 2016 presidential election, further research could be conducted on the efficacy of such misinformation campaigns. Perhaps future research could measure and analyze the success of bot tweets in spreading misinformation by looking into the number of retweets or interactions that non-bot Twitter users have with bot tweets. By doing research on this subject, we could better understand whether bots are successful in spreading misinformation, and whether their success varies across different topics or different time periods.
+We use the `stm` library, employing a topic model to examine what content Twitter bots distributed during and following the 2016 U.S. presidential election. We split the data into groups of tweets being published before and after several events of interest: the first presidential debate (September 26), Clinton's emails and Trump's Access Hollywood tape are leaked (October 7), the election (November 8) and the Trump's inauguration (January 20). Because these tweets contain limited text, constrained to a maximum of 140 characters, we concatenate the text of all tweets made by an individual bot account as a single document. 
 
 ```{r, echo=F}
 library(tidyverse)
@@ -44,7 +36,9 @@ library(qdap)
 #Loading in data and re-casting date column
 iraTweets <- fread("~/Downloads/eng_only_ira_tweets.csv")
 iraTweets$tweet_time = as.Date(iraTweets$tweet_time)
+```
 
+```{r, echo=T}
 #Splitting the tweets into 8 time categories (to become "documents" later)
 group1 = iraTweets[((iraTweets$tweet_time >=  "2016-09-12") & (iraTweets$tweet_time < "2016-09-26")),]
 group2 = iraTweets[((iraTweets$tweet_time >=  "2016-09-26") & (iraTweets$tweet_time < "2016-10-07")),]
@@ -53,7 +47,9 @@ group4 = iraTweets[((iraTweets$tweet_time >=  "2016-10-25") & (iraTweets$tweet_t
 group5 = iraTweets[((iraTweets$tweet_time >=  "2016-11-08") & (iraTweets$tweet_time < "2016-11-22")),]
 group6 = iraTweets[((iraTweets$tweet_time >=  "2017-01-16") & (iraTweets$tweet_time < "2017-01-20")),]
 group7 = iraTweets[((iraTweets$tweet_time >=  "2017-01-20") & (iraTweets$tweet_time < "2017-02-03")),]
+```
 
+```{r, echo=F}
 data_list = list(group1,group2,group3,group4,group5,group6,group7) # Assembling a list to make iteration easier later
 
 master_dfm = dfm(" ",groups = "empty") # Intialize a dfm with an empty document
@@ -160,56 +156,78 @@ groupTheta$label <- ordered(c("9.12-26", "9.26-10.7", "10.7-21", "10.25-11.8", "
 groupTheta$label <- ordered(label, levels = c("9.12-26", "9.26-10.7", "10.7-21", "10.25-11.8", "11.8-22", "1.16-20", "1.20-2.3"))
 ```
 
+The first topic prominent in the corpus is military news. Several novel tweets from bot accounts discuss ongoing U.S. involvement in foreign conflicts. For example, many tweets discuss news on Syria during the time of the U.S. Raqqa campaign starting in October 2016. 
+
+```
+iraqi air force destroys #is convoy north of #ramadi, #iraq https://t.co/zoa1vfur8g
+```
+```
+un-brokered cease-fire begins in yemen https://t.co/lmrcaehkjm #isis
+```
+
+As seen in the figure below, the prevalence of this topic peaks near the time of the election. 
+
 ```{r, echo=F}
 library(ggplot2)
-plot16 <- ggplot(data=groupTheta, aes(x= label, y=V16)) +
-  geom_bar(stat="identity", fill = "cyan") +
-  ggtitle("Expected Proportion of Tweets on Topic 16") +
-  theme(plot.title = element_text(hjust = 0.5)) +
-  xlab("Date") + ylab("Proportion") +
-  theme_minimal() 
-plot16
-```
-
-```{r,echo=F}
-plot17 <- ggplot(data=groupTheta, aes(x= label, y=V17)) +
-  geom_bar(stat="identity", fill = "cyan") +
-  ggtitle("Expected Proportion of Tweets on Topic 17") +
-  theme(plot.title = element_text(hjust = 0.5)) +
-  xlab("Date") + ylab("Proportion") +
-  theme_minimal() 
-plot17
-#wikileak, hillari, podesta, corrupt, crook, email, come
-```
-
-```{r, echo=F}
-plot11 <- ggplot(data=groupTheta, aes(x= label, y=V11)) +
-  geom_bar(stat="identity", fill = "cyan") +
-  ggtitle("Expected Proportion of Tweets on Topic 11") +
-  theme(plot.title = element_text(hjust = 0.5)) +
-  xlab("Date") + ylab("Proportion") +
-  theme_minimal() 
-plot11
-#cop, africanamerican, icon, trailblaz, anthem, black, racism
-```
-
-```{r, echo=F}
 plot1 <- ggplot(data=groupTheta, aes(x= label, y=V1)) +
   geom_bar(stat="identity", fill = "cyan") +
-  ggtitle("Expected Proportion of Tweets on Military) +
+  ggtitle("Expected Proportion of Tweets on Military News") +
   theme(plot.title = element_text(hjust = 0.5)) +
   xlab("Date") + ylab("Proportion") +
   theme_minimal() 
 plot1
 ```
 
-```{r, echo=F}
-plot10 <- ggplot(data=groupTheta, aes(x= label, y=V10)) +
+There is a general trend for bots to discuss racially-charged topics. One topic from the model focuses on the experiences, plights and successes of African Americans. For example,
+
+```
+today we remind you of these black men &amp; youths who were killed by police https://t.co/t6kwdtxogv" 
+```
+
+```
+"white guy taken home to his parents. black kid killed. white jury acquits. welcome to amerikkka. nothing has changed. https://t.co/ztjap0ubnz"
+```
+
+In the figure below, it is clear that more tweets discuss these issues after the election. It is possible that these tweets are a reaction to the election of Donald Trump. We cannot specify the cause of the increased frequency of this topic in the period from October 7 to 21. 
+
+```{r,echo=F}
+plot2 <- ggplot(data=groupTheta, aes(x= label, y=V2)) +
   geom_bar(stat="identity", fill = "cyan") +
-  ggtitle("Expected Proportion of Tweets on Topic 10") +
+  ggtitle("Expected Proportion of Tweets on African Americans") +
   theme(plot.title = element_text(hjust = 0.5)) +
   xlab("Date") + ylab("Proportion") +
   theme_minimal() 
-plot10
-#phx, phoenix, san, nj, baltimor, newark, counti
+plot2
 ```
+
+Many of the tweets in this corpus are starkly partisan. In the figure below, it is clear that anti-Trump tweets are common starting the two weeks prior to the election and after the election. It is surprising, perhaps, that there is a dip in anti-Trump tweets following October 7. While Clinton's e-mails were leaked during this time period, it is also the same time period that Trump's Access Hollywood tape leaked.
+
+```
+if no one stops him and Putin from taking power, we'll all be dead by spring
+```
+
+```{r, echo=F}
+plot4 <- ggplot(data=groupTheta, aes(x= label, y=V4)) +
+  geom_bar(stat="identity", fill = "cyan") +
+  ggtitle("Expected Proportion of Anti-Trump Tweets") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  xlab("Date") + ylab("Proportion") +
+  theme_minimal() 
+plot4
+```
+
+However, there is a large celebration of Trump's victory from Twitter bots immediately before the inauguration. These tweets focus on typical ultra-conservative topics from the election. The plot below shows the dramatic increase in the celebratory tweets around the time of the inauguration.  
+ 
+```{r, echo=F}
+plot8 <- ggplot(data=groupTheta, aes(x= label, y=V8)) +
+  geom_bar(stat="identity", fill = "cyan") +
+  ggtitle("Expected Proportion of Anti-Clinton Tweets") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  xlab("Date") + ylab("Proportion") +
+  theme_minimal() 
+plot8
+```
+
+##Conclusion
+
+While the findings from this project certainly expand upon the existing knowledge on bots and their misinformation campaigns, there are still many questions that have yet to be answered. For example, while our project figured out what sort of topics bots are most likely to tweet and how their engagement in these topics changed over the course of the 2016 presidential election, further research could be conducted on the efficacy of such misinformation campaigns. Perhaps future research could measure and analyze the success of bot tweets in spreading misinformation by looking into the number of retweets or interactions that non-bot Twitter users have with bot tweets. By doing research on this subject, we could better understand whether bots are successful in spreading misinformation, and whether their success varies across different topics or different time periods.
