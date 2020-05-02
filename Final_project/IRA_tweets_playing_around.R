@@ -42,8 +42,9 @@ add_freqs = function(testwords,column_title) {
 dates_frame = add_freqs(c("trump","donald"),'trumpwords')
 cframe = dates_frame
 cframe$date = as.Date(cframe$date)
+
 library(ggplot2)
-ggplot(cframe,aes(x = date,trumpwords)) +
+ggplot(cframe, aes(x = date, y = cframe$trumpwords)) +
   geom_point()
 
 ##### Testing

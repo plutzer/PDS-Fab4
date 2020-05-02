@@ -1,15 +1,31 @@
 ---
-title: "PDS Final Project"
-author: "Taylor J. Damann"
+title: "Political Data Science Coding Project"
+author: "Damann, Plutzer, Caragine, Lee"
 date: "4/30/2020"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-#BOT PROJECT
+```{r initial, echo=F, warning = F, message = F}
+library(tidyverse)
+library(data.table)
+library(tm)
+library(tidytext)
+library(stm)
+library(ggplot2)
+library(quanteda)
+
+#Loading in data and re-casting date column
+iraTweets <- fread("~/Downloads/eng_only_ira_tweets.csv")
+iraTweets$tweet_time = as.Date(iraTweets$tweet_time)
+```
+
+# Russian Twitter Bots during the 2016 U.S. Presidential Election
 
 ## Introduction
 
@@ -19,37 +35,40 @@ While there has been growing concern over the prevalence of bots in social media
 
 In October 2018, Twitter released data on the 3,613 accounts associated with the Russian Internet Research Agency. This company is a known "troll farm" that facilitates the generation of fake accounts and news aimed at influencing public opinion. Our analysis explores the content of the nearly 3 million tweets in this corpus, seeking to understand what types of information the bots introduce. 
 
-## Method
+In an initial exploration of the data, we find that a substantial amount of the tweets are not original. Thirty-six percent of all English tweets from Russian bots are retweeted from other accounts.
 
-We use the `stm` library, employing a topic model to examine what content Twitter bots distributed during and following the 2016 U.S. presidential election. We split the data into groups of tweets being published before and after several events of interest: the first presidential debate (September 26), Clinton's emails and Trump's Access Hollywood tape are leaked (October 7), the election (November 8) and the Trump's inauguration (January 20). Because these tweets contain limited text, constrained to a maximum of 140 characters, we concatenate the text of all tweets made by an individual bot account as a single document. 
-
-```{r, echo=F}
-library(tidyverse)
-library(data.table)
-library(tm)
-library(tidytext)
-library(stm)
-library(ggplot2)
-library(quanteda)
-library(qdap)
-
-#Loading in data and re-casting date column
-iraTweets <- fread("~/Downloads/eng_only_ira_tweets.csv")
-iraTweets$tweet_time = as.Date(iraTweets$tweet_time)
+```{r retweetPercent, echo=T}
+sum(iraTweets$is_retweet == TRUE)/length(iraTweets$is_retweet)*100
 ```
 
-```{r, echo=T}
+We noticed that many tweets dealt with topics of race and racially-charged issues. Below, we find what percentage of all tweets in the data set mention race. 
+
+```{r racePercent, echo = T}
+sum(str_detect(str_to_lower(iraTweets$tweet_text), pattern = 'black lives matter|blm|#takeaknee|black|#blm|african american|naacp|white|altright|supremac|kkk'))/length(iraTweets$tweetid)*100
+```
+
+While this is not a high percentage of tweets, Donald Trump and Hillary Clinton are only mentioned 7.6% of tweets.  
+
+```{r politicPercent, echo = T}
+sum(str_detect(str_to_lower(iraTweets$tweet_text),pattern = 'trump|donald|hillary|clinton'))/length(iraTweets$tweetid)*100
+```
+
+## Method
+
+We use the `stm` library, employing a topic model to examine what content Twitter bots distributed during and following the 2016 U.S. presidential election. We split the data into groups of tweets being published before and after several events of interest: the first presidential debate (September 26), Clinton's emails and Trump's Access Hollywood tape are leaked (October 7), the election (November 8) and the Trump's inauguration (January 20). Because these tweets contain limited text, constrained to a maximum of 140 characters, we concatenate the text of all tweets made by an individual bot account as a single document. Next, we processed the data to remove hashtags, mentions, English stop words, links and emojis. We assemble the documents into a document frequency matrix with the `quanteda` library. This object stores individuals documents as rows and frequency of terms as columns.
+
+```{r splitCategory, echo=F}
 #Splitting the tweets into 8 time categories (to become "documents" later)
 group1 = iraTweets[((iraTweets$tweet_time >=  "2016-09-12") & (iraTweets$tweet_time < "2016-09-26")),]
 group2 = iraTweets[((iraTweets$tweet_time >=  "2016-09-26") & (iraTweets$tweet_time < "2016-10-07")),]
 group3 = iraTweets[((iraTweets$tweet_time >=  "2016-10-07") & (iraTweets$tweet_time < "2016-10-21")),]
 group4 = iraTweets[((iraTweets$tweet_time >=  "2016-10-25") & (iraTweets$tweet_time < "2016-11-08")),]
 group5 = iraTweets[((iraTweets$tweet_time >=  "2016-11-08") & (iraTweets$tweet_time < "2016-11-22")),]
-group6 = iraTweets[((iraTweets$tweet_time >=  "2017-01-16") & (iraTweets$tweet_time < "2017-01-20")),]
+group6 = iraTweets[((iraTweets$tweet_time >=  "2017-01-06") & (iraTweets$tweet_time < "2017-01-20")),]
 group7 = iraTweets[((iraTweets$tweet_time >=  "2017-01-20") & (iraTweets$tweet_time < "2017-02-03")),]
 ```
 
-```{r, echo=F}
+```{r forLoop, echo=T}
 data_list = list(group1,group2,group3,group4,group5,group6,group7) # Assembling a list to make iteration easier later
 
 master_dfm = dfm(" ",groups = "empty") # Intialize a dfm with an empty document
@@ -63,7 +82,7 @@ for (i in 1:length(data_list)) { #This outer loop iterates over the time group d
     ### Initial text cleanup
     doc_string = unlist(str_split(tolower(df$tweet_text),pattern = " ")) #Create a vector of text for this user during this time period
     
-    ######## PLAY AROUND WITH FILTERING AND TEXT CLEANING BETWEEN HERE AND THE NEXT BREAK ########
+    ########FILTERING AND TEXT CLEANING BETWEEN HERE AND THE NEXT BREAK ########
     
     doc_string = gsub("#\\w+ *", "", doc_string) #Remove hashtags
     doc_string = gsub("@\\w+ *", "", doc_string) #Remove user mentions
@@ -82,7 +101,7 @@ for (i in 1:length(data_list)) { #This outer loop iterates over the time group d
     doc_string = doc_string[doc_string != ")"]
     doc_string = gsub("amp", "", doc_string) #remove all the amps
     
-    ########### END OF TEXT CLEANING AND FILTERING ###############################
+    ###########END OF TEXT CLEANING AND FILTERING###############################
     
     ## Creating frequency matrix element for this document
     doc_corpus = corpus(paste(doc_string,collapse = " "))
@@ -93,40 +112,47 @@ for (i in 1:length(data_list)) { #This outer loop iterates over the time group d
     master_dfm = rbind(master_dfm,doc_dfm)
   }
   docscount = docscount + length(unique_handles)
-  print("Finished group")
-  print(proc.time()-start) #Prints out the time elapsed for the text processing for this group
+  #print("Finished group")
+  #print(proc.time()-start) #Prints out the time elapsed for the text processing for this group
 }
+```
 
-####### YOU CAN RUN THIS CODE TO TEST OUT YOUR TEXT CLEANING WITHOUT RUNNING THE TOPIC MODEL #########
-# You can also change the range of values for the above for-loops so that the text processing doesn't run on everything.
-length(featnames(master_dfm))
-doc_corpus
-doc_string
+To begin exploring the data, we use the `topfeatures()` command to view the 50 most frequently used words in our DFM. Unsurprisingly, there are several mentions of Donald Trump and Hillary Clinton. 
 
-master_dfm <- dfm(master_dfm, remove = stopwords("english"), stem = TRUE)
-topfeatures(master_dfm, 200)
+```{r features25, echo=F}
+featMat <- as.matrix(topfeatures(master_dfm, 25))
+colnames(featMat) <- c("Occurrences") 
+featMat
+```
 
-######################################################################################################
+A more aesthetic way to depict the most frequently used words is through a word cloud.
 
-#### Once you are more satisfied with your text cleaning, you can run the topic model...
-### Keep playing with text cleaning, and the stm parameters and see if you can produce meaningful topics...
-
-#Removing the empty doc we put in the dfm to start
-master_dfm = dfm_subset(master_dfm,c(F,rep(T,docscount))) 
-
-## Now run the topic model - Takes ~15 mins
-stm = stm(master_dfm,K = 20, verbose = F, init.type = "Spectral") #took me one hour
-length(stm[[5]])
-stm[[5]]
-#visualizing
-plot(stm)
-plot(stm, labeltype = c("frex"))
-#plot(stm, topics = 11, xlim = type = c("perspectives"), labeltype = c("frex"))
-
+```{r wordCloud,echo=T}
 textplot_wordcloud(master_dfm, min_count = 25, random_order = FALSE,
                    rotation = .25,
                    color = RColorBrewer::brewer.pal(8, "Dark2"))
+```
 
+```{r masterDFM, echo=F}
+#Removing the empty doc we put in the dfm to start
+master_dfm = dfm_subset(master_dfm,c(F,rep(T,docscount))) 
+```
+
+After processing the data, we train the topic model to return 20 topics with the following code:
+
+```{r topicModel, echo=T}
+stm = stm(master_dfm,K = 20, verbose = F, init.type = "Spectral")
+```
+
+Our topic model is a model for how these tweet documents are generated. In the model, terms in the tweets are drawn randomly from different topics. Different sets of tweets pulls from various topics more than others. --bulk this. Below, the figure depicts the 20 topics found by the model. The terms following each topic number are the most frequently used words exclusive to that topic. On their own, these terms are not particularly meaningful. We analyze the documents that came from each of these topics to get a better idea of what each topic is really about.
+
+```{r stmPlot, echo=T}
+plot(stm, labeltype = c("frex"))
+```
+
+discuss plot; While the words displayed next to the topics give a hint at the content of the topic, we look more closely at the four topics we found most interesting.  
+
+```{r thetas, echo=F}
 theta1 <- stm$theta[docnames(master_dfm) %in% grep(pattern = "g1-",docnames(master_dfm),value = T),]
 theta2 <- stm$theta[docnames(master_dfm) %in% grep(pattern = "g2-",docnames(master_dfm),value = T),]
 theta3 <- stm$theta[docnames(master_dfm) %in% grep(pattern = "g3-",docnames(master_dfm),value = T),]
@@ -144,30 +170,19 @@ means6 <- colMeans(theta6)
 means7 <- colMeans(theta7)
 
 groupTheta <- as.data.frame(rbind(means1, means2, means3, means4, means5, means6, means7))
-
-rownames(groupTheta) <- c("9.12-26", "9.26-10.7", "10.7-21", "10.25-11.8", "11.8-22", "1.16-20", "1.20-2.3")
-barplot(groupTheta[1:7, 11], main = "Expected Proportion of Tweets on Topic 11", xlab = "Date", ylab = "Proportion", col = "blue", ylim = c(0,0.25))
-
-barplot(groupTheta[1:7, 16])
-barplot(groupTheta[1:7, 17])
-View(groupTheta)
-
-groupTheta$label <- ordered(c("9.12-26", "9.26-10.7", "10.7-21", "10.25-11.8", "11.8-22", "1.16-20", "1.20-2.3"))
-groupTheta$label <- ordered(label, levels = c("9.12-26", "9.26-10.7", "10.7-21", "10.25-11.8", "11.8-22", "1.16-20", "1.20-2.3"))
+groupTheta$label <- ordered(c("9.12-26", "9.26-10.7", "10.7-21", "10.25-11.8", "11.8-22", "1.6-20", "1.20-2.3"))
+groupTheta$label <- ordered(groupTheta$label, levels = c("9.12-26", "9.26-10.7", "10.7-21", "10.25-11.8", "11.8-22", "1.6-20", "1.20-2.3"))
 ```
 
 The first topic prominent in the corpus is military news. Several novel tweets from bot accounts discuss ongoing U.S. involvement in foreign conflicts. For example, many tweets discuss news on Syria during the time of the U.S. Raqqa campaign starting in October 2016. 
 
-```
-iraqi air force destroys #is convoy north of #ramadi, #iraq https://t.co/zoa1vfur8g
-```
-```
-un-brokered cease-fire begins in yemen https://t.co/lmrcaehkjm #isis
-```
+"iraqi air force destroys #is convoy north of #ramadi, #iraq https://t.co/zoa1vfur8g"
+
+"un-brokered cease-fire begins in yemen https://t.co/lmrcaehkjm #isis"
 
 As seen in the figure below, the prevalence of this topic peaks near the time of the election. 
 
-```{r, echo=F}
+```{r plot1, echo=F}
 library(ggplot2)
 plot1 <- ggplot(data=groupTheta, aes(x= label, y=V1)) +
   geom_bar(stat="identity", fill = "cyan") +
@@ -180,17 +195,13 @@ plot1
 
 There is a general trend for bots to discuss racially-charged topics. One topic from the model focuses on the experiences, plights and successes of African Americans. For example,
 
-```
-today we remind you of these black men &amp; youths who were killed by police https://t.co/t6kwdtxogv" 
-```
+"today we remind you of these black men &amp; youths who were killed by police https://t.co/t6kwdtxogv" 
 
-```
 "white guy taken home to his parents. black kid killed. white jury acquits. welcome to amerikkka. nothing has changed. https://t.co/ztjap0ubnz"
-```
 
 In the figure below, it is clear that more tweets discuss these issues after the election. It is possible that these tweets are a reaction to the election of Donald Trump. We cannot specify the cause of the increased frequency of this topic in the period from October 7 to 21. 
 
-```{r,echo=F}
+```{r plot2,echo=F}
 plot2 <- ggplot(data=groupTheta, aes(x= label, y=V2)) +
   geom_bar(stat="identity", fill = "cyan") +
   ggtitle("Expected Proportion of Tweets on African Americans") +
@@ -202,11 +213,9 @@ plot2
 
 Many of the tweets in this corpus are starkly partisan. In the figure below, it is clear that anti-Trump tweets are common starting the two weeks prior to the election and after the election. It is surprising, perhaps, that there is a dip in anti-Trump tweets following October 7. While Clinton's e-mails were leaked during this time period, it is also the same time period that Trump's Access Hollywood tape leaked.
 
-```
-if no one stops him and Putin from taking power, we'll all be dead by spring
-```
+"if no one stops him and Putin from taking power, we'll all be dead by spring"
 
-```{r, echo=F}
+```{r plot4, echo=F}
 plot4 <- ggplot(data=groupTheta, aes(x= label, y=V4)) +
   geom_bar(stat="identity", fill = "cyan") +
   ggtitle("Expected Proportion of Anti-Trump Tweets") +
@@ -218,7 +227,7 @@ plot4
 
 However, there is a large celebration of Trump's victory from Twitter bots immediately before the inauguration. These tweets focus on typical ultra-conservative topics from the election. The plot below shows the dramatic increase in the celebratory tweets around the time of the inauguration.  
  
-```{r, echo=F}
+```{r plot8, echo=F}
 plot8 <- ggplot(data=groupTheta, aes(x= label, y=V8)) +
   geom_bar(stat="identity", fill = "cyan") +
   ggtitle("Expected Proportion of Anti-Clinton Tweets") +
@@ -228,6 +237,6 @@ plot8 <- ggplot(data=groupTheta, aes(x= label, y=V8)) +
 plot8
 ```
 
-##Conclusion
+## Conclusion
 
 While the findings from this project certainly expand upon the existing knowledge on bots and their misinformation campaigns, there are still many questions that have yet to be answered. For example, while our project figured out what sort of topics bots are most likely to tweet and how their engagement in these topics changed over the course of the 2016 presidential election, further research could be conducted on the efficacy of such misinformation campaigns. Perhaps future research could measure and analyze the success of bot tweets in spreading misinformation by looking into the number of retweets or interactions that non-bot Twitter users have with bot tweets. By doing research on this subject, we could better understand whether bots are successful in spreading misinformation, and whether their success varies across different topics or different time periods.
