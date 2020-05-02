@@ -29,33 +29,36 @@ iraTweets$tweet_time = as.Date(iraTweets$tweet_time)
 
 ## Introduction
 
-While there has been growing concern over the prevalence of bots in social media and how they impact the national discourse on politics and various issues, there has not been much research regarding what sort of information the bots are disseminating and how their message has changed over time. In this project, we wanted to look into this issue by examining a data set of Twitter bot activity during the 2016 election.
+The 2016 U.S. presidential election was met with concern about the prevalence of bots on social media. The U.S. Senate Intelligence Committee found that thousands of
+Russian-based Twitter accounts were posing as Americans and sharing fake news prior to
+the 2016 election, causing fears that even U.S. presidential elections could be engineered
+by another country. Despite fears as to how bots might impact national discourse on politics, there has not been much research regarding the information that bots disseminated. In this project, we present a short analysis of Twitter bot activity before and after the election.
 
 ## Data
 
-In October 2018, Twitter released data on the 3,613 accounts associated with the Russian Internet Research Agency. This company is a known "troll farm" that facilitates the generation of fake accounts and news aimed at influencing public opinion. Our analysis explores the content of the nearly 3 million tweets in this corpus, seeking to understand what types of information the bots introduce. 
-
-In an initial exploration of the data, we find that a substantial amount of the tweets are not original. Thirty-six percent of all English tweets from Russian bots are retweeted from other accounts.
+In October 2018, Twitter released data on the 3,613 accounts associated with the Russian Internet Research Agency (IRA). This company is a known "troll farm" that facilitates the generation of fake accounts and news aimed at influencing public opinion. Our analysis explores the content of the nearly 3 million tweets in this corpus. In an initial exploration of the data, we find that a substantial amount of the tweets are not original to the account, but are retweeted from others. Thirty-six percent of all English tweets from IRA bots are retweets.
 
 ```{r retweetPercent, echo=T}
 sum(iraTweets$is_retweet == TRUE)/length(iraTweets$is_retweet)*100
 ```
 
-We noticed that many tweets dealt with topics of race and racially-charged issues. Below, we find what percentage of all tweets in the data set mention race. 
+In further analysis, it became clear that many tweets discussed topics of race and racially-charged issues. Below, we show what percentage of all tweets in the data set mention race-related terms. 
 
 ```{r racePercent, echo = T}
 sum(str_detect(str_to_lower(iraTweets$tweet_text), pattern = 'black lives matter|blm|#takeaknee|black|#blm|african american|naacp|white|altright|supremac|kkk'))/length(iraTweets$tweetid)*100
 ```
 
-While this is not a high percentage of tweets, Donald Trump and Hillary Clinton are only mentioned 7.6% of tweets.  
+While this is not a particularly high percentage of tweets, Donald Trump and Hillary Clinton are only mentioned in 7.6% of tweets for comparison.  
 
 ```{r politicPercent, echo = T}
 sum(str_detect(str_to_lower(iraTweets$tweet_text),pattern = 'trump|donald|hillary|clinton'))/length(iraTweets$tweetid)*100
 ```
 
+These percentages are small because of the high frequency of accounts that seem to take on a tabloid-like personality, discussing pop culture and other non-political issues. 
+
 ## Method
 
-We use the `stm` library, employing a topic model to examine what content Twitter bots distributed during and following the 2016 U.S. presidential election. We split the data into groups of tweets being published before and after several events of interest: the first presidential debate (September 26), Clinton's emails and Trump's Access Hollywood tape are leaked (October 7), the election (November 8) and the Trump's inauguration (January 20). Because these tweets contain limited text, constrained to a maximum of 140 characters, we concatenate the text of all tweets made by an individual bot account as a single document. Next, we processed the data to remove hashtags, mentions, English stop words, links and emojis. We assemble the documents into a document frequency matrix with the `quanteda` library. This object stores individuals documents as rows and frequency of terms as columns.
+We use the `stm` library, employing a topic model to examine what content IRA bots produced during and following the 2016 U.S. presidential election. We split the data into groups of tweets published before and after several events of interest: the first presidential debate (September 26), the near-simultaneous leak of Clinton's emails and Trump's Access Hollywood tape (October 7), the election (November 8) and the inauguration (January 20). Because tweets contain limited text, constrained to a maximum of 140 characters, we concatenate the text of all tweets made by an individual bot account as a single document. Next, we process the data to remove hashtags, mentions, English stop words, links and emojis and stem the words. We assemble the documents into a document frequency matrix (DFM) with the `quanteda` library. This object stores individual documents as rows and frequency of terms in those documents as columns.
 
 ```{r splitCategory, echo=F}
 #Splitting the tweets into 8 time categories (to become "documents" later)
@@ -119,13 +122,13 @@ for (i in 1:length(data_list)) { #This outer loop iterates over the time group d
 
 To begin exploring the data, we use the `topfeatures()` command to view the 50 most frequently used words in our DFM. Unsurprisingly, there are several mentions of Donald Trump and Hillary Clinton. 
 
-```{r features25, echo=F}
+```{r features25, echo=T}
 featMat <- as.matrix(topfeatures(master_dfm, 25))
 colnames(featMat) <- c("Occurrences") 
 featMat
 ```
 
-A more aesthetic way to depict the most frequently used words is through a word cloud.
+A world cloud can present frequently used terms more aesthetically.
 
 ```{r wordCloud,echo=T}
 textplot_wordcloud(master_dfm, min_count = 25, random_order = FALSE,
@@ -138,19 +141,19 @@ textplot_wordcloud(master_dfm, min_count = 25, random_order = FALSE,
 master_dfm = dfm_subset(master_dfm,c(F,rep(T,docscount))) 
 ```
 
-After processing the data, we train the topic model to return 20 topics with the following code:
+After processing the data, we train the topic model to identify 20 topics with the following code:
 
 ```{r topicModel, echo=T}
 stm = stm(master_dfm,K = 20, verbose = F, init.type = "Spectral")
 ```
 
-Our topic model is a model for how these tweet documents are generated. In the model, terms in the tweets are drawn randomly from different topics. Different sets of tweets pulls from various topics more than others. --bulk this. Below, the figure depicts the 20 topics found by the model. The terms following each topic number are the most frequently used words exclusive to that topic. On their own, these terms are not particularly meaningful. We analyze the documents that came from each of these topics to get a better idea of what each topic is really about.
+Our topic model is a model for how the tweet documents are generated. In the model, terms in the tweets are drawn randomly from different topics. Different sets of tweets pull from various topics more than others. Below, the figure depicts the 20 topics found by the model. The terms following each topic number are the most frequently used words exclusive to that topic (FREX). On their own, these terms are not particularly meaningful. We analyze the documents that stem from each of these topics to get a better idea of what each topic is really about.
 
 ```{r stmPlot, echo=T}
 plot(stm, labeltype = c("frex"))
 ```
 
-discuss plot; While the words displayed next to the topics give a hint at the content of the topic, we look more closely at the four topics we found most interesting.  
+Plotting the `stm` model presents the identified 20 topics along with a few FREX words. While the words displayed next to the topics give a hint at the content of the topic, there are not entirely informative. After manually looking through the content of the tweets that make up each topics, we look more closely at the four topics we found most interesting.  
 
 ```{r thetas, echo=F}
 theta1 <- stm$theta[docnames(master_dfm) %in% grep(pattern = "g1-",docnames(master_dfm),value = T),]
@@ -195,11 +198,11 @@ plot1
 
 There is a general trend for bots to discuss racially-charged topics. One topic from the model focuses on the experiences, plights and successes of African Americans. For example,
 
-"today we remind you of these black men &amp; youths who were killed by police https://t.co/t6kwdtxogv" 
+"today we remind you of these black men & youths who were killed by police https://t.co/t6kwdtxogv" 
 
 "white guy taken home to his parents. black kid killed. white jury acquits. welcome to amerikkka. nothing has changed. https://t.co/ztjap0ubnz"
 
-In the figure below, it is clear that more tweets discuss these issues after the election. It is possible that these tweets are a reaction to the election of Donald Trump. We cannot specify the cause of the increased frequency of this topic in the period from October 7 to 21. 
+In the figure below, it is clear that more tweets discuss these issues after the election. It is possible that these tweets are a reaction to the election of Donald Trump. We cannot specify the cause of the increased frequency of this topic in the period from October 7 to 21. This demonstrates a limitation of our analysis. While we can see the general trend of topics, we cannot identify the causes of the trend. 
 
 ```{r plot2,echo=F}
 plot2 <- ggplot(data=groupTheta, aes(x= label, y=V2)) +
